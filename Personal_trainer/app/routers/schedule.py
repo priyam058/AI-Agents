@@ -13,13 +13,14 @@ from app.schemas.schedule import (
     EventRequest,
     EventResponse,
     EventUpdateRequest,
+    OptimizeDayRequest,
     OptimizeRequest,
     OptimizeResponse,
     ScheduleRequest,
     ScheduleResponse,
     VoiceEventRequest,
 )
-from app.services.claude_service import extract_schedule_events, optimize_schedule
+from app.services.claude_service import extract_schedule_events, optimize_day_schedule, optimize_schedule
 from app.services.profile_service import decrypt_profile_for_prompt
 
 router = APIRouter()
@@ -64,6 +65,7 @@ async def create_events(
             end_time=e.end_time,
             label=e.label,
             event_type=e.event_type,
+            is_recurring=e.is_recurring,
         )
         for e in body.events
     ]
@@ -234,3 +236,34 @@ async def optimize(
     profile_ctx = decrypt_profile_for_prompt(profile)
     result = await optimize_schedule(profile_ctx, events, body.preferences)
     return OptimizeResponse(**result)
+
+
+@router.post("/optimize-day")
+async def optimize_single_day(
+    body: OptimizeDayRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Re-optimize a single day's workout slot when the user's schedule changes mid-week."""
+    profile_result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
+    profile = profile_result.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Complete onboarding before optimizing schedule")
+
+    schedule = await _get_or_create_schedule(current_user.id, db)
+    events_result = await db.execute(
+        select(ScheduleEvent).where(
+            ScheduleEvent.schedule_id == schedule.id,
+            ScheduleEvent.event_type == "busy",
+            ScheduleEvent.day == body.day,
+        )
+    )
+    day_events = [
+        {"start_time": str(e.start_time), "end_time": str(e.end_time), "label": e.label}
+        for e in events_result.scalars().all()
+    ]
+    await db.commit()
+
+    profile_ctx = decrypt_profile_for_prompt(profile)
+    result = await optimize_day_schedule(profile_ctx, body.day, day_events, body.preferences)
+    return result

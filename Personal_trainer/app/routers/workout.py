@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -17,6 +19,56 @@ from app.services.claude_service import generate_workout_plan
 from app.services.profile_service import decrypt_profile_for_prompt
 
 router = APIRouter()
+
+_DAY_ORDER = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+@router.get("/today")
+async def get_todays_workout(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return today's workout from the active plan based on current day of week."""
+    result = await db.execute(
+        select(WorkoutPlan)
+        .where(WorkoutPlan.user_id == current_user.id, WorkoutPlan.is_active == True)
+        .order_by(WorkoutPlan.generated_at.desc())
+        .limit(1)
+    )
+    plan = result.scalar_one_or_none()
+    if not plan:
+        raise HTTPException(status_code=404, detail="No active workout plan — generate one first")
+
+    today_name = datetime.now(timezone.utc).strftime("%A")  # "Monday", "Tuesday", etc.
+
+    # Search all weeks for today's day entry
+    weeks = plan.plan_data.get("weeks", [])
+    today_day = None
+    for week in weeks:
+        for day_entry in week.get("days", []):
+            if day_entry.get("day", "").strip().capitalize() == today_name:
+                today_day = day_entry
+                break
+        if today_day:
+            break
+
+    if today_day is None:
+        return {
+            "day": today_name,
+            "is_rest_day": True,
+            "workout_type": "Rest",
+            "duration_minutes": 0,
+            "exercises": [],
+        }
+
+    exercises = today_day.get("exercises", [])
+    return {
+        "day": today_name,
+        "is_rest_day": len(exercises) == 0,
+        "workout_type": today_day.get("workout_type", "Training"),
+        "duration_minutes": today_day.get("duration_minutes", 45),
+        "exercises": exercises,
+    }
 
 
 @router.post("/generate", response_model=WorkoutPlanResponse, status_code=status.HTTP_201_CREATED)

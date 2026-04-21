@@ -13,6 +13,7 @@ class EventRequest(BaseModel):
     end_time: time
     label: Optional[str] = None
     event_type: EventType = "busy"
+    is_recurring: bool = False
 
 
 class EventUpdateRequest(BaseModel):
@@ -21,6 +22,7 @@ class EventUpdateRequest(BaseModel):
     end_time: Optional[time] = None
     label: Optional[str] = None
     event_type: Optional[EventType] = None
+    is_recurring: Optional[bool] = None
 
 
 class EventResponse(BaseModel):
@@ -30,6 +32,7 @@ class EventResponse(BaseModel):
     end_time: time
     label: Optional[str]
     event_type: str
+    is_recurring: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -47,6 +50,11 @@ class VoiceEventRequest(BaseModel):
 
 
 class OptimizeRequest(BaseModel):
+    preferences: Optional[str] = None
+
+
+class OptimizeDayRequest(BaseModel):
+    day: str  # e.g. "Monday"
     preferences: Optional[str] = None
 
 

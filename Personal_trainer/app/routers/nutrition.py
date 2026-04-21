@@ -32,7 +32,12 @@ async def generate_plan(
     )
 
     profile_ctx = decrypt_profile_for_prompt(profile)
-    plan_data = await generate_nutrition_plan(profile_ctx, body.dietary_restrictions, body.goal_override)
+    plan_data = await generate_nutrition_plan(
+        profile_ctx,
+        body.dietary_restrictions,
+        body.goal_override,
+        body.available_ingredients,
+    )
 
     plan = NutritionPlan(
         user_id=current_user.id,
@@ -40,6 +45,7 @@ async def generate_plan(
         daily_calories=plan_data.get("daily_calories"),
         macros=plan_data.get("macros"),
         dietary_restrictions=body.dietary_restrictions,
+        shopping_list=plan_data.get("shopping_list"),
     )
     db.add(plan)
     await db.commit()

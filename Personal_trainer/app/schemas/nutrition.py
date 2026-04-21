@@ -1,10 +1,11 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
 
 class NutritionGenerateRequest(BaseModel):
+    available_ingredients: Optional[List[str]] = None
     dietary_restrictions: Optional[str] = None
     goal_override: Optional[str] = None
 
@@ -14,6 +15,7 @@ class NutritionPlanResponse(BaseModel):
     daily_calories: Optional[int]
     macros: Optional[Dict[str, Any]]
     plan_data: Dict[str, Any]
+    shopping_list: Optional[List[Dict[str, Any]]] = None
     is_active: bool
 
     model_config = {"from_attributes": True}

@@ -17,6 +17,7 @@ class NutritionPlan(Base):
     daily_calories: Mapped[int | None] = mapped_column(Integer, nullable=True)
     macros: Mapped[dict | None] = mapped_column(JSONB, nullable=True)  # {protein_g, carbs_g, fat_g}
     dietary_restrictions: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shopping_list: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     generated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)

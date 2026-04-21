@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, time, timezone
 
-from sqlalchemy import DateTime, String, Text, Time
+from sqlalchemy import Boolean, DateTime, String, Text, Time
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -36,6 +36,7 @@ class ScheduleEvent(Base):
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
     label: Mapped[str | None] = mapped_column(Text, nullable=True)  # e.g. "Team standup", "Gym commute"
     event_type: Mapped[str] = mapped_column(String(20), nullable=False, default="busy")  # "busy" | "workout"
+    is_recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

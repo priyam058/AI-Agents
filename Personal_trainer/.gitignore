@@ -38,3 +38,8 @@ Thumbs.db
 
 # Alembic
 alembic/versions/*.pyc
+
+# Local notes (may contain keys or sensitive info)
+*.txt
+*.png
+CLAUDE.md
