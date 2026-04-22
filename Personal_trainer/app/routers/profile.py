@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 
@@ -12,19 +12,23 @@ from app.services.profile_service import decrypt_profile, encrypt_profile_fields
 router = APIRouter()
 
 
-@router.post("/onboarding", response_model=ProfileResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/onboarding", response_model=ProfileResponse)
 async def onboarding(
     body: OnboardingRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    existing = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Profile already created — use PATCH to update")
-
+    result = await db.execute(select(UserProfile).where(UserProfile.user_id == current_user.id))
+    profile = result.scalar_one_or_none()
     encrypted = encrypt_profile_fields(body)
-    profile = UserProfile(user_id=current_user.id, **encrypted)
-    db.add(profile)
+
+    if profile:
+        for field, value in encrypted.items():
+            setattr(profile, field, value)
+    else:
+        profile = UserProfile(user_id=current_user.id, **encrypted)
+        db.add(profile)
+
     await db.commit()
     await db.refresh(profile)
     return decrypt_profile(profile)
