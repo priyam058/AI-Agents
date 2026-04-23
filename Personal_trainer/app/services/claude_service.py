@@ -136,20 +136,21 @@ async def chat_with_pt(
 
 async def generate_workout_plan(profile_context: dict, focus: str | None, duration_weeks: int) -> dict:
     prompt = (
-        f"Create a {duration_weeks}-week workout plan for a client with the following profile:\n"
+        f"Create a 1-week workout plan for a client with the following profile:\n"
         f"- Fitness level: {profile_context['workout_level']}\n"
         f"- Goal: {profile_context['goal']}\n"
         f"- Age: {profile_context['age']}\n"
         f"- Weight: {profile_context['weight_kg']}kg, Height: {profile_context['height_cm']}cm\n"
         f"- Injuries/limitations: {profile_context['injuries']}\n"
         f"- Focus area: {focus or 'general fitness'}\n\n"
-        "Include 3-5 workout days per week with rest days. Use exercise names that match the ExerciseDB library."
+        "Include 3-5 workout days with rest days. Be concise — list exercises with sets/reps/rest only. "
+        "Use exercise names that match the ExerciseDB library."
     )
 
     client = _client()
     response = client.messages.create(
         model="claude-opus-4-5",
-        max_tokens=4096,
+        max_tokens=8192,
         system=_WORKOUT_SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
