@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.exercise import Exercise
 from app.models.user import User
-from app.services.exercisedb_service import get_all_muscle_names, sync_exercises
+from app.services.exercisedb_service import get_all_muscle_names
 
 router = APIRouter()
 
@@ -90,10 +90,3 @@ async def get_exercise(
     }
 
 
-@router.post("/sync", status_code=200)
-async def trigger_sync(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    count = await sync_exercises(db)
-    return {"message": f"Synced {count} exercises from ExerciseDB"}
