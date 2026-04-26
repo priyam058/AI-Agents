@@ -31,12 +31,21 @@ async def generate_plan(
         .values(is_active=False)
     )
 
+    # Resolve ingredients: prefer explicit list, fall back to parsing free text
+    ingredients = body.available_ingredients
+    if not ingredients and body.ingredients_text:
+        # Simple comma/newline split — good enough for ingredient lists
+        ingredients = [
+            i.strip() for i in body.ingredients_text.replace("\n", ",").split(",")
+            if i.strip() and len(i.strip()) > 1
+        ]
+
     profile_ctx = decrypt_profile_for_prompt(profile)
     plan_data = await generate_nutrition_plan(
         profile_ctx,
         body.dietary_restrictions,
         body.goal_override,
-        body.available_ingredients,
+        ingredients,
     )
 
     plan = NutritionPlan(

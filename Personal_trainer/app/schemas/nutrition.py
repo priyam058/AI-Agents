@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class NutritionGenerateRequest(BaseModel):
     available_ingredients: Optional[List[str]] = None
+    ingredients_text: Optional[str] = None  # free-text alternative to available_ingredients list
     dietary_restrictions: Optional[str] = None
     goal_override: Optional[str] = None
 
