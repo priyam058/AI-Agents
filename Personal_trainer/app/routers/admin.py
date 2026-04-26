@@ -77,6 +77,24 @@ def _cleanup_sync() -> tuple[int, int]:
     return deleted, errors
 
 
+@router.post("/sync-exercises", tags=["admin"])
+async def sync_exercise_library(
+    x_admin_key: str = Header(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Fetch all exercises from ExerciseDB and cache them in the database.
+    Run once after deployment, then periodically to refresh.
+    Protected by x-admin-key header.
+    """
+    if x_admin_key != settings.admin_key:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    from app.services.exercisedb_service import sync_exercises
+    count = await sync_exercises(db)
+    return {"synced": count}
+
+
 @router.post("/send-weekly-summary", tags=["admin"])
 async def send_weekly_summary(
     x_admin_key: str = Header(...),

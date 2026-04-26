@@ -9,28 +9,18 @@ from sqlalchemy import select
 from app.models.exercise import Exercise
 
 _EXERCISEDB_BASE = "https://exercisedb-api.vercel.app/api/v1"
-_PAGE_LIMIT = 20  # items per page for initial sync
 
 
 async def _fetch_all_exercises() -> list[dict]:
-    exercises = []
-    offset = 0
-    async with httpx.AsyncClient(timeout=30) as client:
-        while True:
-            resp = await client.get(
-                f"{_EXERCISEDB_BASE}/exercises",
-                params={"limit": _PAGE_LIMIT, "offset": offset},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            batch = data.get("data", {}).get("exercises", [])
-            if not batch:
-                break
-            exercises.extend(batch)
-            if len(batch) < _PAGE_LIMIT:
-                break
-            offset += _PAGE_LIMIT
-    return exercises
+    """Fetch all exercises in one request (ExerciseDB supports limit up to 2000)."""
+    async with httpx.AsyncClient(timeout=120) as client:
+        resp = await client.get(
+            f"{_EXERCISEDB_BASE}/exercises",
+            params={"limit": 1500, "offset": 0},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("data", {}).get("exercises", [])
 
 
 async def sync_exercises(db: AsyncSession) -> int:
