@@ -52,9 +52,9 @@ async def sync_exercises(db: AsyncSession) -> int:
         if not ex_id:
             continue
 
-        name = item.get("name", "").lower()
-        body_part = item.get("category", "").lower()
-        equipment = item.get("equipment", "body only").lower()
+        name = (item.get("name") or "").lower()
+        body_part = (item.get("category") or "").lower()
+        equipment = (item.get("equipment") or "body only").lower()
         target_muscle = (item.get("primaryMuscles") or [""])[0].lower()
         secondary_muscles = [m.lower() for m in (item.get("secondaryMuscles") or [])]
         gif_url = _image_url(item.get("images") or [])
