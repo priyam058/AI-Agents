@@ -17,12 +17,14 @@ def verify_password(password: str, hashed: str) -> bool:
 
 
 def hash_token(token: str) -> str:
-    """Store refresh tokens as bcrypt hashes to prevent replay if DB is leaked."""
-    return bcrypt.hashpw(token.encode(), bcrypt.gensalt()).decode()
+    """SHA-256 hash for refresh tokens — 64 random bytes makes bcrypt unnecessary."""
+    import hashlib
+    return hashlib.sha256(token.encode()).hexdigest()
 
 
 def verify_token_hash(token: str, hashed: str) -> bool:
-    return bcrypt.checkpw(token.encode(), hashed.encode())
+    import hashlib
+    return hashlib.sha256(token.encode()).hexdigest() == hashed
 
 
 def create_access_token(user_id: UUID, email: str) -> str:
