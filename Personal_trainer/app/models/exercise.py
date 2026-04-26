@@ -12,7 +12,7 @@ class Exercise(Base):
 
     __tablename__ = "exercises"
 
-    id: Mapped[str] = mapped_column(String(50), primary_key=True)  # ExerciseDB id (e.g. "0001")
+    id: Mapped[str] = mapped_column(String(100), primary_key=True)
     name: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     body_part: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     equipment: Mapped[str] = mapped_column(String(100), nullable=False)
